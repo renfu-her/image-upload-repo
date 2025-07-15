@@ -73,7 +73,7 @@ class ImageUploadController extends Controller
             // 返回成功回應
             return response()->json([
                 'status' => 'success',
-                'path' => Storage::url($path)
+                'path' => config('app.url') . Storage::url($path)
             ], 200);
             
         } catch (\Exception $e) {
