@@ -162,11 +162,11 @@
                     processData: false,
                     contentType: false,
                     success: function(data) {
-                        if (data.success) {
-                            showResult(`上傳成功！檔案路徑: ${data.data.path}`, 'success');
+                        if (data.status === 'success') {
+                            showResult(`上傳成功！檔案路徑: ${data.path}`, 'success');
                             showDebugInfo(`成功回應: ${JSON.stringify(data, null, 2)}`);
                         } else {
-                            showResult(`上傳失敗: ${data.message}`, 'error');
+                            showResult(`上傳失敗`, 'error');
                             showDebugInfo(`錯誤回應: ${JSON.stringify(data, null, 2)}`);
                         }
                     },

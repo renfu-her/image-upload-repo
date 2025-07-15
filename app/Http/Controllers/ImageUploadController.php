@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ImageUploadController extends Controller
 {
@@ -23,12 +24,8 @@ class ImageUploadController extends Controller
         if (!$request->hasFile('image')) {
             Log::error('No image file found in request');
             return response()->json([
-                'success' => false,
-                'message' => '沒有找到圖片檔案',
-                'debug' => [
-                    'files' => $request->allFiles(),
-                    'content_type' => $request->header('Content-Type')
-                ]
+                'status' => 'error',
+                'path' => null
             ], 400);
         }
 
@@ -37,12 +34,11 @@ class ImageUploadController extends Controller
             $request->validate([
                 'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             Log::error('Validation failed', ['errors' => $e->errors()]);
             return response()->json([
-                'success' => false,
-                'message' => '檔案驗證失敗',
-                'errors' => $e->errors()
+                'status' => 'error',
+                'path' => null
             ], 422);
         }
 
@@ -76,15 +72,8 @@ class ImageUploadController extends Controller
             
             // 返回成功回應
             return response()->json([
-                'success' => true,
-                'message' => '圖片上傳成功',
-                'data' => [
-                    'filename' => $fileName,
-                    'path' => Storage::url($path),
-                    'size' => $file->getSize(),
-                    'mime_type' => $file->getMimeType(),
-                    'original_name' => $file->getClientOriginalName()
-                ]
+                'status' => 'success',
+                'path' => Storage::url($path)
             ], 200);
             
         } catch (\Exception $e) {
@@ -94,13 +83,8 @@ class ImageUploadController extends Controller
             ]);
             
             return response()->json([
-                'success' => false,
-                'message' => '圖片上傳失敗: ' . $e->getMessage(),
-                'debug' => [
-                    'error_type' => get_class($e),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]
+                'status' => 'error',
+                'path' => null
             ], 500);
         }
     }
