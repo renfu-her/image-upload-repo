@@ -56,24 +56,19 @@ class ImageUploadController extends Controller
             // 生成唯一的檔案名稱
             $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
             
-            // 確保目錄存在
-            $directory = 'public/images';
-            if (!Storage::exists($directory)) {
-                Storage::makeDirectory($directory);
-            }
-            
-            // 儲存檔案到 storage/app/public/images 目錄
-            $path = $file->storeAs($directory, $fileName);
+            // 儲存檔案到 public/images 目錄（公開可存取）
+            $publicPath = 'images/' . $fileName;
+            $file->move(public_path('images'), $fileName);
             
             Log::info('File saved successfully', [
-                'path' => $path,
-                'full_path' => Storage::path($path)
+                'path' => $publicPath,
+                'full_path' => public_path('images/' . $fileName)
             ]);
             
             // 返回成功回應
             return response()->json([
                 'status' => 'success',
-                'path' => config('app.url') . Storage::url($path)
+                'path' => config('app.url') . '/' . $publicPath
             ], 200);
             
         } catch (\Exception $e) {
