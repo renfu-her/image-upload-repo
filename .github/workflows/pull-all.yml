@@ -22,7 +22,3 @@ jobs:
           php artisan config:cache
           php artisan view:cache
           php artisan route:cache
-          php artisan lang:publish
-          php artisan vendor:publish --force --tag=livewire:assets
-          php artisan filament:assets
-          php artisan filament:cache-components
