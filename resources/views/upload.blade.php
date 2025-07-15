@@ -78,6 +78,7 @@
         <input type="file" id="fileInput" accept="image/*">
         <button class="upload-btn" onclick="document.getElementById('fileInput').click()">選擇檔案</button>
         <button class="upload-btn" id="uploadBtn" style="display: none;">上傳圖片</button>
+        <button class="upload-btn" id="testBtn" style="display: none; background-color: #28a745;">測試上傳</button>
     </div>
     
     <div id="result"></div>
@@ -88,6 +89,7 @@
         const uploadContainer = document.getElementById('uploadContainer');
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
+        const testBtn = document.getElementById('testBtn');
         const result = document.getElementById('result');
         const preview = document.getElementById('preview');
         const debugInfo = document.getElementById('debugInfo');
@@ -118,6 +120,7 @@
         });
         
         uploadBtn.addEventListener('click', uploadFile);
+        testBtn.addEventListener('click', testUpload);
         
         function handleFile(file) {
             if (!file.type.startsWith('image/')) {
@@ -134,7 +137,9 @@
             reader.readAsDataURL(file);
             
             uploadBtn.style.display = 'inline-block';
+            testBtn.style.display = 'inline-block';
             uploadBtn.dataset.file = file;
+            testBtn.dataset.file = file;
         }
         
         function uploadFile() {
@@ -144,22 +149,15 @@
             const formData = new FormData();
             formData.append('image', file);
             
-            // 取得 CSRF token
-            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
             // 顯示除錯資訊
             showDebugInfo(`準備上傳檔案:
 檔案名稱: ${file.name}
 檔案大小: ${file.size} bytes
 檔案類型: ${file.type}
-CSRF Token: ${token}
 目標 URL: /upload/image`);
             
             fetch('/upload/image', {
                 method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': token
-                },
                 body: formData
             })
             .then(response => {
@@ -191,6 +189,41 @@ Content-Type: ${response.headers.get('Content-Type')}`);
             .catch(error => {
                 showResult(`上傳錯誤: ${error.message}`, 'error');
                 showDebugInfo(`錯誤詳情: ${error.stack}`);
+            });
+        }
+        
+        function testUpload() {
+            const file = testBtn.dataset.file;
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            showDebugInfo(`測試上傳檔案:
+檔案名稱: ${file.name}
+檔案大小: ${file.size} bytes
+檔案類型: ${file.type}
+目標 URL: /test/upload`);
+            
+            fetch('/test/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                showDebugInfo(`測試伺服器回應:
+狀態碼: ${response.status}
+狀態文字: ${response.statusText}
+Content-Type: ${response.headers.get('Content-Type')}`);
+                
+                return response.json();
+            })
+            .then(data => {
+                showResult(`測試結果: ${data.message}`, data.success ? 'success' : 'error');
+                showDebugInfo(`測試回應: ${JSON.stringify(data, null, 2)}`);
+            })
+            .catch(error => {
+                showResult(`測試錯誤: ${error.message}`, 'error');
+                showDebugInfo(`測試錯誤詳情: ${error.stack}`);
             });
         }
         

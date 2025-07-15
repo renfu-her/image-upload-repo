@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ImageUploadController;
+use App\Http\Controllers\TestController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -15,6 +16,9 @@ Route::get('/test', function () {
         'timestamp' => now()
     ]);
 });
+
+// 測試上傳路由
+Route::post('/test/upload', [TestController::class, 'testUpload']);
 
 // 圖片上傳測試頁面
 Route::get('/upload', function () {

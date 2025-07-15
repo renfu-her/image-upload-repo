@@ -11,9 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // 排除圖片上傳路由的 CSRF 驗證
-        $middleware->web(remove: [
-            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+        // 配置 CSRF 驗證排除
+        $middleware->validateCsrfTokens(except: [
+            '/upload/image'
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
