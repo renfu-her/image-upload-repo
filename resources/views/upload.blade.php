@@ -11,16 +11,19 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
         }
         .upload-container {
             border: 2px dashed #ccc;
             padding: 20px;
             text-align: center;
             margin: 20px 0;
+            background-color: #2a2a2a;
         }
         .upload-container.dragover {
             border-color: #007bff;
-            background-color: #f8f9fa;
+            background-color: #3a3a3a;
         }
         #fileInput {
             display: none;
@@ -43,18 +46,27 @@
             border-radius: 5px;
         }
         .success {
-            background-color: #d4edda;
+            background-color: #155724;
             border: 1px solid #c3e6cb;
-            color: #155724;
+            color: #d4edda;
         }
         .error {
-            background-color: #f8d7da;
+            background-color: #721c24;
             border: 1px solid #f5c6cb;
-            color: #721c24;
+            color: #f8d7da;
         }
         .preview {
             max-width: 300px;
             margin-top: 10px;
+        }
+        .debug-info {
+            background-color: #2a2a2a;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
         }
     </style>
 </head>
@@ -69,6 +81,7 @@
     </div>
     
     <div id="result"></div>
+    <div id="debugInfo" class="debug-info" style="display: none;"></div>
     <img id="preview" class="preview" style="display: none;">
     
     <script>
@@ -77,6 +90,7 @@
         const uploadBtn = document.getElementById('uploadBtn');
         const result = document.getElementById('result');
         const preview = document.getElementById('preview');
+        const debugInfo = document.getElementById('debugInfo');
         
         // 拖拽功能
         uploadContainer.addEventListener('dragover', (e) => {
@@ -133,6 +147,14 @@
             // 取得 CSRF token
             const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             
+            // 顯示除錯資訊
+            showDebugInfo(`準備上傳檔案:
+檔案名稱: ${file.name}
+檔案大小: ${file.size} bytes
+檔案類型: ${file.type}
+CSRF Token: ${token}
+目標 URL: /upload/image`);
+            
             fetch('/upload/image', {
                 method: 'POST',
                 headers: {
@@ -140,21 +162,45 @@
                 },
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                showDebugInfo(`伺服器回應:
+狀態碼: ${response.status}
+狀態文字: ${response.statusText}
+Content-Type: ${response.headers.get('Content-Type')}`);
+                
+                // 檢查回應類型
+                const contentType = response.headers.get('Content-Type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // 如果不是 JSON，讀取文字內容
+                    return response.text().then(text => {
+                        throw new Error(`伺服器返回非 JSON 格式: ${text.substring(0, 200)}...`);
+                    });
+                }
+            })
             .then(data => {
                 if (data.success) {
                     showResult(`上傳成功！檔案路徑: ${data.data.path}`, 'success');
+                    showDebugInfo(`成功回應: ${JSON.stringify(data, null, 2)}`);
                 } else {
                     showResult(`上傳失敗: ${data.message}`, 'error');
+                    showDebugInfo(`錯誤回應: ${JSON.stringify(data, null, 2)}`);
                 }
             })
             .catch(error => {
                 showResult(`上傳錯誤: ${error.message}`, 'error');
+                showDebugInfo(`錯誤詳情: ${error.stack}`);
             });
         }
         
         function showResult(message, type) {
             result.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+        
+        function showDebugInfo(info) {
+            debugInfo.textContent = info;
+            debugInfo.style.display = 'block';
         }
     </script>
 </body>
