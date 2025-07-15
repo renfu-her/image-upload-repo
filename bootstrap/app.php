@@ -13,7 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // 配置 CSRF 驗證排除
         $middleware->validateCsrfTokens(except: [
-            '/upload/image'
+            '/upload/image',
+            '/test/upload'
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
